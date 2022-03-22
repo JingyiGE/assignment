@@ -41,6 +41,8 @@ Heart_data<-readr::read_csv("https://www.louisaslett.com/Courses/MISCADA/heart_f
 skimr::skim(Heart_data)
 #DataExplorer::plot_histogram(Heart_data, ncol = 3)
 
+
+#### Data preprocessing ###
 #abnormal serum_creatinine 
 Heart_data <- Heart_data %>%
   mutate(serum_creatinine_level = case_when(
@@ -55,7 +57,7 @@ Heart_data <- Heart_data %>%
     TRUE ~ "normal"
   ))
 
-#data categorical
+#data categorical (for plot)
 Heart_data <- Heart_data %>%
   mutate(suffer_fatal_mi = case_when(
     fatal_mi == 1 ~ "suffer_fatal_mi",
@@ -175,6 +177,9 @@ set.seed(1)
 #set.seed(3344) 
 #set.seed(876) 
 
+
+### Data preprocess end ###
+
 Heart_data_1 <- readr::read_csv("https://www.louisaslett.com/Courses/MISCADA/heart_failure.csv")
 
 
@@ -189,6 +194,7 @@ Heart_data_3 <- Heart_data_3 %>%
 Heart_data_3$fatal_mi <- as.factor(Heart_data_3$fatal_mi)
 heart_task <- TaskClassif$new("fatalmyocardial", Heart_data_3 , target = "fatal_mi", positive = "1")
 
+#cross-validation
 cv5 <- rsmp("cv", folds = 5)
 cv5$instantiate(heart_task)
 
@@ -197,7 +203,7 @@ lrn_cart <- lrn("classif.rpart", predict_type = "prob")
 lrn_ranger   <- lrn("classif.ranger", predict_type = "prob")
 lrn_log_reg  <- lrn("classif.log_reg", predict_type = "prob")
 
-######################## test #############################
+#### test
 res <- benchmark(data.table(
   task       = list(heart_task),
   learner    = list(lrn_baseline,
@@ -235,11 +241,17 @@ tree1_rpart$cptable
 ################################### improved model start ##############################
 set.seed(1234)
 
+#trees
 lrn_cart_cp <- lrn("classif.rpart", predict_type = "prob", cp=0.0325)
+
+#random forest
 lrn_ranger_low_nt <- lrn("classif.ranger", predict_type = "prob", num.trees = 5, mtry = 1)
 lrn_ranger_high_nt <- lrn("classif.ranger", predict_type = "prob", num.trees = 900, mtry = 9)
+
+#log-reg
 lrn_log_reg_it  <- lrn("classif.log_reg", predict_type = "prob", maxit=40)
 
+# improved model performance (8 MODELS)
 res <- benchmark(data.table(
   task       = list(heart_task),
   learner    = list(lrn_baseline,
@@ -326,4 +338,4 @@ ggplot(data = data_variable,mapping = aes(x = variable, y = importances, fill=va
 
 p_1 <- ggplot(plot_data,aes(x=x,y=y,fill=label))+geom_bar(position="dodge",stat="identity")
 p_1
-
+#### only for plot end ####
